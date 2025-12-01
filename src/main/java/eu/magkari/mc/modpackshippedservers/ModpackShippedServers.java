@@ -2,20 +2,20 @@ package eu.magkari.mc.modpackshippedservers;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
 import net.fabricmc.api.ClientModInitializer;
-
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.network.ServerInfo;
-import net.minecraft.client.option.ServerList;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.multiplayer.ServerList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.PrintWriter;
-import java.lang.reflect.InvocationTargetException;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 public class ModpackShippedServers implements ClientModInitializer {
     public static final String MOD_ID = "modpack-shipped-servers";
@@ -28,44 +28,62 @@ public class ModpackShippedServers implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        File configFile = FabricLoader.getInstance().getConfigDir().resolve("shipped-servers.json").toFile();
+        Path configPath = FabricLoader.getInstance().getConfigDir().resolve("shipped-servers.json");
 
         try {
-            if (configFile.createNewFile()) {
-                String json = gson.toJson(JsonParser.parseString(gson.toJson(new SConfig())));
-                try (PrintWriter out = new PrintWriter(configFile)) {
-                    out.println(json);
+            if (Files.notExists(configPath)) {
+                SConfig defaultConfig = new SConfig();
+                String json = gson.toJson(defaultConfig);
+
+                try (BufferedWriter out = Files.newBufferedWriter(configPath, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+                    out.write(json);
+                } catch (IOException e) {
+                    LOGGER.error("Error writing file!", e);
                 }
-                CONFIG = new SConfig();
+
+                CONFIG = defaultConfig;
+
             } else {
-                CONFIG = gson.fromJson(new String(Files.readAllBytes(configFile.toPath())), SConfig.class);
-                if (CONFIG == null) {
-                    throw new NullPointerException("The servers file was empty.");
+                String content = Files.readString(configPath, StandardCharsets.UTF_8);
+
+                if (content.isBlank()) {
+                    LOGGER.warn("Servers file was empty! Using default values.");
+                    CONFIG = new SConfig();
+                } else {
+                    CONFIG = gson.fromJson(content, SConfig.class);
+
+                    if (CONFIG == null) {
+                        LOGGER.warn("Servers file had invalid JSON! Using default values.");
+                        CONFIG = new SConfig();
+                    }
                 }
             }
-        } catch (Exception exception) {
-            LOGGER.error("There was an error creating/loading the servers file!", exception);
+        } catch (Exception e) {
+            LOGGER.error("There was an error creating/loading the servers file!", e);
             CONFIG = new SConfig();
-            LOGGER.warn("Defaulting to original servers file.");
+            LOGGER.warn("Using default values.");
         }
+
 
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             ServerList serverList = new ServerList(client);
-            serverList.loadFile();
+            serverList.load();
             if (serverList.size() == 0) {
                 CONFIG.getServers().forEach(config -> {
-                    ServerInfo configuredServer = Utils.createServerInfo(config.name(), config.address());
+                    //? >= 1.20.2 {
+                    ServerData configuredServer = new ServerData(config.name(), config.address(), ServerData.Type.OTHER);
+                    //?} else {
+                    /*ServerData configuredServer = new ServerData(config.name(), config.address(), false);
+                     *///?}
                     try {
-                        configuredServer.setResourcePackPolicy(ServerInfo.ResourcePackPolicy.valueOf(config.resourcePackPolicy().toUpperCase()));
+                        configuredServer.setResourcePackStatus(ServerData.ServerPackStatus.valueOf(config.resourcePackPolicy().toUpperCase()));
                     } catch (IllegalArgumentException e) {
-                        LOGGER.warn("Invalid resource pack policy '{}' for configuredServer '{}'. Defaulting to 'PROMPT'.", config.resourcePackPolicy(), config.name());
-                        configuredServer.setResourcePackPolicy(ServerInfo.ResourcePackPolicy.PROMPT);
-                        serverList.add(configuredServer, false);
-                        return;
+                        LOGGER.warn("Invalid resource pack policy '{}' for server '{}'. Defaulting to 'PROMPT'.", config.resourcePackPolicy(), config.name());
+                        configuredServer.setResourcePackStatus(ServerData.ServerPackStatus.PROMPT);
                     }
                     serverList.add(configuredServer, false);
                 });
-                serverList.saveFile();
+                serverList.save();
             }
         });
     }

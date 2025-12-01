@@ -1,0 +1,2 @@
+# 1.1.0
+Hello all. This version gets rid of the shady reflection in the old one and is therefore less likely to break. However this also means that there are 2 different versions now, 1.20.1, which is tested for 1.20 + 1.20.1, but can maybe go lower, and we also have 1.20.2. 1.20.2 should work for every version above it (until minecraft changes something). I will update the modrinth tags any time a new version is released, if it is compatible. 

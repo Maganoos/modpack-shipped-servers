@@ -1,29 +1,28 @@
 {
-	"schemaVersion": 1,
-	"id": "modpack-shipped-servers",
-	"version": "${version}",
-	"name": "Modpack Shipped Servers",
-	"description": "Allows Modpacks to ship default servers, that players can then choose to remove if they want to.",
-	"authors": [
-		"Maganoos"
-	],
-	"contact": {
-		"homepage": "https://modrinth.com/modpack-shipped-servers",
-		"issues": "https://github.com/Maganoos/modpack-shipped-servers",
-		"sources": "https://github.com/Maganoos/modpack-shipped-servers"
-	},
-	"license": "MIT",
-	"icon": "assets/modpack-shipped-servers/icon.png",
-	"environment": "client",
-	"entrypoints": {
-		"client": [
-			"eu.magkari.mc.modpackshippedservers.ModpackShippedServers"
-		]
-	},
-	"depends": {
-		"fabricloader": ">=0.16",
-		"minecraft": ">=1.20",
-		"java": ">=17",
-		"fabric-lifecycle-events-v1": "*"
-	}
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "Allows Modpacks to ship default servers, that players can then choose to remove if they want to.",
+  "authors": [
+    "Maganoos"
+  ],
+  "contact": {
+    "homepage": "https://modrinth.com/modpack-shipped-servers",
+    "issues": "https://github.com/Maganoos/modpack-shipped-servers",
+    "sources": "https://github.com/Maganoos/modpack-shipped-servers"
+  },
+  "license": "MIT",
+  "icon": "assets/modpack-shipped-servers/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "eu.magkari.mc.modpackshippedservers.ModpackShippedServers"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18",
+    "minecraft": "${minecraft}",
+    "fabric-lifecycle-events-v1": "*"
+  }
 }
